@@ -1,0 +1,11 @@
+{
+  "name": "maneki-webar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --format=esm --minify --target=es2020,safari15 --outfile=public/app.js --legal-comments=none --external:fs --external:util --external:buffer --external:string_decoder",
+    "compile-target": "node tools/compile-target.mjs"
+  },
+  "dependencies": { "mind-ar": "1.2.5", "three": "0.160.0" },
+  "devDependencies": { "esbuild": "^0.24.0" }
+}
