@@ -5,8 +5,9 @@ import numpy as np, cv2, zxingcpp
 import qart_layout as L
 from search_C import fitness
 from qart import QArtEncoder, codeword_map
-URL = "HTTPS://HEJKLUCI-DEBUG.GITHUB.IO/M/"
-v, e, mk, x0, y0, sym = int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5]), int(sys.argv[6])
+import os
+URL = os.environ.get("QR_URL", "HTTPS://HEJKLUCI-DEBUG.GITHUB.IO/M/")
+v, e, mk, x0, y0, sym = int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), int(sys.argv[6])
 L.DOT_R = 0.38
 n = 4 * v + 17; m = sym / n
 r = L.run(URL, v, e, mk, x0, y0, sym, dots=True, rot=0)
@@ -45,7 +46,7 @@ for i, g in enumerate(order):
         print(f"{time.time()-t0:4.0f}s group {i}/{len(order)} dots {len(keep)}", flush=True)
 img = L.draw_marks(nodot, keep, x0, y0, m)
 f, res = fitness(img, text, x0, y0, sym, n)
-tag = f"C_v{v}{e}m{mk}"
+tag = os.environ.get("TAG", f"C_v{v}{e}m{mk}")
 cv2.imwrite(str(L.OUT / f"{tag}_pruned.png"), img)
 np.save(L.OUT / f"{tag}_matrix.npy", mat)
 json.dump({"v": v, "e": e, "mask": mk, "x0": x0, "y0": y0, "sym": sym, "text": text, "dots": len(keep),

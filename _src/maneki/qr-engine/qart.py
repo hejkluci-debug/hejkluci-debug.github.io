@@ -33,14 +33,25 @@ def _append(bits, val, n):
         bits.append((val >> i) & 1)
 
 
+def _url_segments(url):
+    """Alphanumeric where possible. A lower-case scheme ("https://") is kept as a
+    short byte segment because Android matches intent schemes case-sensitively:
+    "HTTPS://..." opens "no app found" on some Android scanners."""
+    if QrSegment.is_alphanumeric(url):
+        return [QrSegment.make_alphanumeric(url)]
+    for pre in ("https://", "http://"):
+        if url.startswith(pre) and QrSegment.is_alphanumeric(url[len(pre):]):
+            return [QrSegment.make_bytes(pre.encode()), QrSegment.make_alphanumeric(url[len(pre):])]
+    return [QrSegment.make_bytes(url.encode())]
+
+
 class QArtEncoder:
     def __init__(self, url: str, version: int, ecl: str):
         self.url, self.version, self.ecl = url, version, ecl
         self.ec = ECC[ecl]
         self.size = version * 4 + 17
         cap = QrCode._get_num_data_codewords(version, self.ec) * 8
-        head = [QrSegment.make_alphanumeric(url) if QrSegment.is_alphanumeric(url) else QrSegment.make_bytes(url.encode()),
-                QrSegment.make_bytes(b"#")]
+        head = _url_segments(url) + [QrSegment.make_bytes(b"#")]
         used = sum(4 + s.get_mode().num_char_count_bits(version) + len(s._bitdata) for s in head)
         ncc = QrSegment.Mode.NUMERIC.num_char_count_bits(version)
         room = cap - used - 4 - ncc
