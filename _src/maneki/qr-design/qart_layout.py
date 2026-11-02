@@ -21,7 +21,8 @@ from qr_engine import decoders
 W, H = 2480, 3508
 DARK = np.array([38, 0, 3], np.float32)       # BGR navy of the reference QR
 LIGHT = np.array([255, 255, 255], np.float32)
-CAT_SCALE, CAT_X, CAT_Y = 0.78797, 295.3, 191.8
+import os
+CAT_SCALE, CAT_X, CAT_Y = 0.78797, 295.3 + float(os.environ.get('CAT_DX', 0)), 191.8
 OUT = ROOT / "builds" / "qart"; OUT.mkdir(parents=True, exist_ok=True)
 DOT_R = 0.38
 DOT_DARK = (150, 62, 18)      # BGR, the cat's cobalt blue
