@@ -24,7 +24,12 @@ OUT = ROOT / "webar/public/assets"
 TMP = ROOT / "assets/video/loop"; TMP.mkdir(parents=True, exist_ok=True)
 (ROOT / "assets/print").mkdir(exist_ok=True)
 LOOP = 60
-X0, Y0, X1, Y1 = 672, 916, 2480, 2228          # changing region (arm + eyes) + margin
+import os
+FULL = os.environ.get("OVERLAY", "full") == "full"
+if FULL:
+    X0, Y0, X1, Y1 = 320, 392, 2232, 3240      # whole cat (union of alpha over the loop) + margin
+else:
+    X0, Y0, X1, Y1 = 672, 916, 2480, 2228      # changing region (arm + eyes) + margin
 OUT_W = 720
 
 subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-c:v", "libvpx-vp9", "-i", str(SRC),
@@ -62,7 +67,12 @@ for c in crops:
     a = c[..., 3:4].astype(np.float32) / 255.0
     # shirt-white under the moving parts so the printed arm never shows through
     col = c[..., :3] * a + 255 * (1 - a)
-    alpha = patch      # overlay only where the animation differs from the print, feathered edge
+    if FULL:   # straight (not pre-blended) colour on the soft cat edge: no white halo on darker shirts
+        col = np.where(a > 0.02, c[..., :3].astype(np.float32), 255.0)
+    if FULL:   # whole cat from the video + shirt-white wherever the printed arm must be hidden
+        alpha = np.maximum(a[..., 0], patch)
+    else:      # overlay only where the animation differs from the print, feathered edge
+        alpha = patch
     col = cv2.resize(col.astype(np.uint8), (ow, oh), interpolation=cv2.INTER_AREA)
     al = cv2.resize((alpha * 255).astype(np.uint8), (ow, oh), interpolation=cv2.INTER_AREA)
     st = np.vstack([col, cv2.cvtColor(al, cv2.COLOR_GRAY2BGR)])
