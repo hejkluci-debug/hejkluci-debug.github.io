@@ -40,5 +40,6 @@ scene = {
     "video": {"rect": [X0 - ox, Y0 - oy, X1 - ox, Y1 - oy], "src": ["cat_anim.mp4", "cat_anim.webm"],
               "size": vid["size"]},
 }
+import time; scene["ver"] = time.strftime("%Y%m%d%H%M")   # cache-busting for phones
 json.dump(scene, open(OUT / "scene.json", "w"), indent=1)
 print(json.dumps(scene))

@@ -11,7 +11,7 @@ export function createVideoElement(base, sources) {
   for (const src of sources) {
     const s = document.createElement('source');
     s.src = `${base}/${src}`;
-    s.type = src.endsWith('.mp4') ? 'video/mp4; codecs="avc1.640028"' : 'video/webm; codecs="vp9"';
+    s.type = src.includes('.mp4') ? 'video/mp4; codecs="avc1.640028"' : 'video/webm; codecs="vp9"';
     v.appendChild(s);
   }
   v.load();

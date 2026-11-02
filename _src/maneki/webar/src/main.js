@@ -20,11 +20,11 @@ window.__maneki = { marks };
 mark('script');
 
 // Prefetch everything that does not need the camera while the user reads the intro.
-const scenePromise = fetch(`${BASE}/scene.json`).then((r) => r.json());
+const scenePromise = fetch(`${BASE}/scene.json`, { cache: 'no-cache' }).then((r) => r.json());
 let video = null;
 const texPromise = scenePromise.then((sc) => {
   if (sc.mode === 'video') {
-    video = createVideoElement(BASE, sc.video.src);
+    video = createVideoElement(BASE, sc.video.src.map((f) => (sc.ver ? `${f}?v=${sc.ver}` : f)));
     window.__maneki.overlayVideo = video;
     return new Promise((res) => {
       if (video.readyState >= 2) return res(null);
@@ -35,7 +35,7 @@ const texPromise = scenePromise.then((sc) => {
   }
   return loadTextures(BASE, ['arm', 'underlay']);
 });
-const targetPromise = fetch(`${BASE}/target.mind`).then((r) => r.blob()).then((b) => URL.createObjectURL(b));
+const targetPromise = scenePromise.then((sc) => fetch(`${BASE}/target.mind${sc.ver ? `?v=${sc.ver}` : ''}`)).then((r) => r.blob()).then((b) => URL.createObjectURL(b));
 Promise.all([scenePromise, texPromise, targetPromise]).then(() => {
   mark('assets');
   $('start').disabled = false;
