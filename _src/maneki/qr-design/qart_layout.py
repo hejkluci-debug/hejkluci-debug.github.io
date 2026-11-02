@@ -285,6 +285,7 @@ def run(url, version, ecl, mask, x0, y0, sym_px, iters=3, save=False, ec_use=0.6
         cv2.imwrite(str(OUT / f"qart_{tag}.png"), img)
         np.save(OUT / f"qart_{tag}_matrix.npy", mat)
         json.dump({**out, "text": text}, open(OUT / f"qart_{tag}.json", "w"), indent=1)
+    out["_img"] = img; out["_mat"] = mat; out["text"] = text
     return out
 
 
