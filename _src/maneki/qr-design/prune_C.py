@@ -10,9 +10,10 @@ URL = os.environ.get("QR_URL", "HTTPS://HEJKLUCI-DEBUG.GITHUB.IO/M/")
 v, e, mk, x0, y0, sym = int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), int(sys.argv[6])
 L.DOT_R = 0.38
 n = 4 * v + 17; m = sym / n
-r = L.run(URL, v, e, mk, x0, y0, sym, dots=True, rot=0)
+ROT = int(os.environ.get("ROT", 0))
+r = L.run(URL, v, e, mk, x0, y0, sym, dots=True, rot=ROT)
 mat, text = r["_mat"], r["text"]
-nodot = L.compose(L.render_qr(mat, x0, y0, m))
+nodot = L.compose(L.render_qr(mat, x0, y0, m, finders=L.finder_corners(n, ROT)))
 # recover the mark list: modules where the dotted image differs from nodot at module centres
 diff = np.abs(r["_img"].astype(int) - nodot.astype(int)).sum(2) > 30
 marks = set()
@@ -23,7 +24,7 @@ for y in range(n):
             marks.add((y, x, int(mat[y, x])))
 FULL = fitness(r["_img"], text, x0, y0, sym, n)[0]
 print("dots", len(marks), "fitness", FULL, fitness(r["_img"], text, x0, y0, sym, n)[1])
-enc = QArtEncoder(URL, v, e); cw = codeword_map(enc)[0]
+enc = QArtEncoder(URL, v, e); cw = np.ascontiguousarray(np.rot90(codeword_map(enc)[0], ROT))
 groups = {}
 for mrk in marks:
     groups.setdefault(int(cw[mrk[0], mrk[1]]), []).append(mrk)
@@ -49,7 +50,7 @@ f, res = fitness(img, text, x0, y0, sym, n)
 tag = os.environ.get("TAG", f"C_v{v}{e}m{mk}")
 cv2.imwrite(str(L.OUT / f"{tag}_pruned.png"), img)
 np.save(L.OUT / f"{tag}_matrix.npy", mat)
-json.dump({"v": v, "e": e, "mask": mk, "x0": x0, "y0": y0, "sym": sym, "text": text, "dots": len(keep),
+json.dump({"rot": ROT, "v": v, "e": e, "mask": mk, "x0": x0, "y0": y0, "sym": sym, "text": text, "dots": len(keep),
            "dots_before": len(marks), "fitness": f, "res": res, "uec12": uec(img), "cover": r["cover"],
            "marks": sorted(keep)}, open(L.OUT / f"{tag}_pruned.json", "w"))
 print("final dots", len(keep), "fitness", f, res, "uec", uec(img))
