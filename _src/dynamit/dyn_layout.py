@@ -304,8 +304,40 @@ def seen_bits(img, x0, y0, m, n, px_per_module=(8, 11, 15)):
         reads.append(sample_grid(hybrid_binarize(gs), (x0 - xa) * s, (y0 - ya) * s, ppm, n))
     reads = np.array(reads)
     out = (reads.sum(0) * 2 > len(px_per_module)).astype(np.int8)
+    if os.environ.get("GLOBALVIEW") == "1":
+        # also what a GLOBAL-threshold scanner reads (ZXing GlobalHistogramBinarizer black point)
+        g_reads = []
+        for ppm in px_per_module:
+            s = ppm / m
+            gs = cv2.resize(g, None, fx=s, fy=s, interpolation=cv2.INTER_AREA)
+            gs = cv2.GaussianBlur(gs, (0, 0), 0.6)
+            bp = global_black_point(gs)
+            bw = (gs < bp).astype(np.uint8)
+            g_reads.append(sample_grid(bw, (x0 - xa) * s, (y0 - ya) * s, ppm, n))
+        reads = np.concatenate([reads, np.array(g_reads)])
     reliable = (reads.min(0) == reads.max(0)).astype(np.float32)
     return out, reliable
+
+
+def global_black_point(gs):
+    """ZXing GlobalHistogramBinarizer.estimateBlackPoint on 4 sampled rows."""
+    h, w = gs.shape
+    hist = np.zeros(32, np.int64)
+    for k in range(1, 5):
+        row = gs[h * k // 5, w // 5: 4 * w // 5]
+        hist += np.bincount(row >> 3, minlength=32)
+    first = int(hist.argmax()); maxc = hist[first]
+    xs = np.arange(32)
+    second = int(((xs - first) ** 2 * hist).argmax())
+    if first > second: first, second = second, first
+    if second - first <= 2:
+        return 128
+    best, bscore = second - 1, -1
+    for x in range(second - 1, first, -1):
+        ff = x - first
+        sc = ff * ff * (second - x) * (maxc - hist[x])
+        if sc > bscore: best, bscore = x, sc
+    return best << 3
 
 
 def finder_corners(n, rot):
