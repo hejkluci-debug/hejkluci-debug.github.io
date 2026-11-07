@@ -76,7 +76,12 @@ def render_qr_lightdots(mat, x0, y0, m, finders=None):
         if SQ: break
         for x in range(-QZ, n + QZ):
             inside = 0 <= y < n and 0 <= x < n
-            if inside and (mat[y, x] or infinder(y, x)):
+            if inside and infinder(y, x):
+                continue
+            if inside and mat[y, x]:
+                if os.environ.get("BOTHDOTS") == "1":      # dark modules drawn as dark dots too (cat-like dark-on-light)
+                    cx, cy = x0 + (x + .5) * m, y0 + (y + .5) * m
+                    cv2.circle(canvas, (int(round(cx)), int(round(cy))), int(round(rad * float(os.environ.get("DARKDOTSCALE", 1.0)))), DARKDOTC, -1, cv2.LINE_AA)
                 continue
             cx, cy = x0 + (x + .5) * m, y0 + (y + .5) * m
             if SOLIDSEP and sep(y, x) and not infinder(y, x):
@@ -153,6 +158,7 @@ def render_qr_lightdots(mat, x0, y0, m, finders=None):
         rrect(X + 2 * m, Y + 2 * m, X + 5 * m - 1, Y + 5 * m - 1, blk, int(m * 0.5))
     return canvas.astype(np.float32)
 
+DARKDOTC = tuple(int(v) for v in os.environ.get("DARKDOTC", "75,10,45").split(","))
 LIGHTDOT = np.array([float(v) for v in os.environ.get("LIGHTDOT", "255,255,255").split(",")])
 FINDERC = np.array([float(v) for v in os.environ.get("FINDERC", "30,10,25").split(",")])
 DOTSIZE = float(os.environ.get("DOTSIZE", 0.86))
